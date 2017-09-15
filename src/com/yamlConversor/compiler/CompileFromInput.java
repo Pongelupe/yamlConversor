@@ -29,17 +29,16 @@ public class CompileFromInput {
 	private File file;
 
 	public CompileFromInput(File file) throws Exception {
-		// CopyOption[] options = new CopyOption[]{
-		// StandardCopyOption.REPLACE_EXISTING,
-		// StandardCopyOption.COPY_ATTRIBUTES
-		// };
-		//
-		// Path in = Paths.get(file.toURI());
+	
 		Path out = Paths.get("C:\\projects\\java\\yamlConversor\\src\\com\\yamlConversor\\classes\\" + file.getName());
-
-		// Files.copy(in, out, options);
-
-		this.file = out.toFile();
+		
+		Thread copiaArquivo = new CopiaArquivoThread(file, out);
+		
+		copiaArquivo.start();
+		
+		copiaArquivo.join();
+		
+		this.file = ((CopiaArquivoThread) copiaArquivo).getArquivoOutput();
 
 		setPackage();
 	}
@@ -64,6 +63,7 @@ public class CompileFromInput {
 				compilationUnit);
 
 		if (task.call()) {
+			Thread.currentThread().sleep(10000);
 			/**
 			 * Load and execute
 			 *************************************************************************************************/
@@ -71,9 +71,12 @@ public class CompileFromInput {
 			// Create a new custom class loader, pointing to the directory that
 			// contains the compiled
 			// classes, this should point to the top of the package structure!
-			URLClassLoader classLoader = new URLClassLoader(new URL[] { new File("./").toURI().toURL() });
+			URLClassLoader classLoader = URLClassLoader.newInstance(
+					new URL[] { new File("").toURI().toURL() });
+			
 			// Load the class from the classloader by name....
-			Class<?> loadedClass = classLoader.loadClass(getPackage() + file.getName().replace(".java", ""));
+			Class<?> loadedClass = classLoader.loadClass(getPackage()
+					+ file.getName().replace(".java", ""));
 			// Create a new instance...
 			Object obj = loadedClass.newInstance();
 			// Santity check
