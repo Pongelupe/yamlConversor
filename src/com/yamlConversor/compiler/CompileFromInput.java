@@ -5,14 +5,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,30 +21,32 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import com.yamlConversor.definitions.YamlObjectGenerator;
+
 public class CompileFromInput {
 
 	private final String packageClasses = "com.yamlConversor.classes";
 	private File file;
 
 	public CompileFromInput(File file) throws Exception {
-//        CopyOption[] options = new CopyOption[]{
-//                StandardCopyOption.REPLACE_EXISTING,
-//                StandardCopyOption.COPY_ATTRIBUTES
-//        };
-//        
-//        Path in = Paths.get(file.toURI());
-        Path out = Paths.get("C:\\projects\\java\\yamlConversor\\src\\com\\yamlConversor\\classes\\" + file.getName());
-        
-//		Files.copy(in, out, options);
-		
+		// CopyOption[] options = new CopyOption[]{
+		// StandardCopyOption.REPLACE_EXISTING,
+		// StandardCopyOption.COPY_ATTRIBUTES
+		// };
+		//
+		// Path in = Paths.get(file.toURI());
+		Path out = Paths.get("C:\\projects\\java\\yamlConversor\\src\\com\\yamlConversor\\classes\\" + file.getName());
+
+		// Files.copy(in, out, options);
+
 		this.file = out.toFile();
-		
+
 		setPackage();
 	}
 
 	public void compile() throws Exception {
 		Path dest = Paths.get("C:\\projects\\java\\yamlConversor\\bin");
-		
+
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -58,7 +57,7 @@ public class CompileFromInput {
 		optionList.add(System.getProperty("java.class.path") + ";dist/InlineCompiler.jar");
 		optionList.add("-d");
 		optionList.add(dest.toString());
-		
+
 		Iterable<? extends JavaFileObject> compilationUnit = fileManager
 				.getJavaFileObjectsFromFiles(Arrays.asList(file));
 		JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null,
@@ -79,6 +78,7 @@ public class CompileFromInput {
 			Object obj = loadedClass.newInstance();
 			// Santity check
 			System.out.println(obj.getClass());
+			YamlObjectGenerator.generateDefinitionsYaml(obj);
 			classLoader.close();
 
 			/*************************************************************************************************
@@ -118,7 +118,7 @@ public class CompileFromInput {
 		bw.flush();
 		bw.close();
 
-		Files.move(temp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING); 
+		Files.move(temp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
 	}
 
