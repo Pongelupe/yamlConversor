@@ -1,36 +1,55 @@
 package com.yamlConversor.paths;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class YamlPathGenerator {
 
-	private static Queue<String> paths = new LinkedList<String>();
+	private static Queue<Path> paths = new LinkedList<Path>();
+	private static Queue<String> generatedPaths = new LinkedList<String>();
 
-	public static void generatePaths(Class<?> clazz) {
-		ArrayList<Object> enums = new ArrayList<Object>(Arrays.asList(clazz.getEnumConstants()));
-
-		for (Object object : enums) {
-			System.out.println(object.toString());
-			paths.add(object.toString());
+	public static Queue<String> generatePaths(String path) throws Exception {
+		File file = new File(path);
+		BufferedReader br = new BufferedReader(new FileReader(file));
+		String line;
+		while ((line = br.readLine()) != null) {
+			paths.offer(getPath(line));
 		}
+		br.close();
+
+		while (!paths.isEmpty())
+			generatedPaths.offer(generatePath(paths.poll()));
+
+		generatedPaths.offer("definitions:");
+		
+		return generatedPaths;
+
 	}
 
-	public static void generatePath(String path, String requestType, String objDefinitionRequest,
-			String objDefinitionResponse) {
+	private static Path getPath(String line) {
+		String[] splitedPathObj = line.split("\\s+");
+		String path = splitedPathObj[0];
+		String request = splitedPathObj[1];
+		String response = splitedPathObj[2];
+
+		return new Path(path, request, response);
+	}
+
+	public static String generatePath(Path path) {
 		StringBuilder sb = new StringBuilder();
 		// Request
-		sb.append(path + ":\n" + requestType
+		sb.append(path.getPath() + ":\n" + path.getRequestType()
 				+ ":\ndescription:\"\"\nconsumes:\n-application/json\nproduces:\n-application/json\n"
 				+ "parameters:\n-in: body\ndescription:\"\"\nrequeried: true\nschema:\n$ref:\"#/definitions/"
-				+ objDefinitionRequest + "\"\n");
+				+ path.getObjDefinitionRequest() + "\"\n");
 
 		// response
-		sb.append("responses:\n\"200\":\n$ref:\"#/definition/" + objDefinitionResponse + "\"");
+		sb.append("responses:\n\"200\":\n$ref:\"#/definition/" + path.getObjDefinitionResponse() + "\"");
 
-		System.out.println(sb.toString());
+		return sb.toString();
 
 	}
 
