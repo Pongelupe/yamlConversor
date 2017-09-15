@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,12 +48,12 @@ public class YamlObjectGenerator {
 	private static String getTypesFormatted(Field field, String type) throws Exception {
 		type = type.toLowerCase();
 
-		if (type.contains("set") || type.contains("collection") || type.contains("list"))
+		if (Collection.class.isAssignableFrom(field.getType()))
 			type = getArrays(field);
 		else if (type.contains("[]"))
 			type = "array\nitens:\ntype:" + type.substring(0, type.length() - 2);
 
-		else if (!isPrimitivo(field)) {
+		else if (!isPrimitive(field)) {
 			type = getObject(field, type);
 		}
 
@@ -63,7 +64,7 @@ public class YamlObjectGenerator {
 		return getObject(field.getType().newInstance());
 	}
 
-	private static boolean isPrimitivo(Field field) {
+	private static boolean isPrimitive(Field field) {
 		Class<?> clazz = field.getType();
 		return getPrimitiveTypes().contains(clazz);
 	}
