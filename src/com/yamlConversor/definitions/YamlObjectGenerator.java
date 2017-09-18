@@ -14,7 +14,7 @@ public class YamlObjectGenerator {
 
 	private static String fileDefinitionYamlName = "yaml(x).yaml";
 
-	public static void generateDefinitionsYaml(Object obj) throws Exception {
+	public static String generateDefinitionsYaml(Object obj) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		String simpleName = obj.getClass().getSimpleName();
 		sb.append(simpleName + ":\ntype: ");
@@ -24,7 +24,7 @@ public class YamlObjectGenerator {
 		writer.println(sb.toString());
 		writer.close();
 
-		System.out.println(sb.toString());
+		return sb.toString();
 	}
 
 	private static String getObject(Object obj) throws Exception {

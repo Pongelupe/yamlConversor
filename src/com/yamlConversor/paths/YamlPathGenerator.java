@@ -23,8 +23,8 @@ public class YamlPathGenerator {
 		while (!paths.isEmpty())
 			generatedPaths.offer(generatePath(paths.poll()));
 
-		generatedPaths.offer("definitions:");
-		
+		generatedPaths.offer("\ndefinitions:\n");
+
 		return generatedPaths;
 
 	}
@@ -41,7 +41,7 @@ public class YamlPathGenerator {
 	public static String generatePath(Path path) {
 		StringBuilder sb = new StringBuilder();
 		// Request
-		sb.append(path.getPath() + ":\n" + path.getRequestType()
+		sb.append("\n" + path.getPath() + ":\n" + path.getRequestType()
 				+ ":\ndescription:\"\"\nconsumes:\n-application/json\nproduces:\n-application/json\n"
 				+ "parameters:\n-in: body\ndescription:\"\"\nrequeried: true\nschema:\n$ref:\"#/definitions/"
 				+ path.getObjDefinitionRequest() + "\"\n");

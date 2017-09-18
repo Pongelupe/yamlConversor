@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.tools.Diagnostic;
@@ -26,25 +25,15 @@ import com.yamlConversor.definitions.YamlObjectGenerator;
 public class CompileFromInput {
 
 	private final String packageClasses = "com.yamlConversor.classes";
-	private File file;
+	private final ArrayList<File> filesToBeCompiled = new ArrayList<File>();
 
-	public CompileFromInput(File file) throws Exception {
-	
-		Path out = Paths.get("C:\\projects\\java\\yamlConversor\\src\\com\\yamlConversor\\classes\\" + file.getName());
-		
-		Thread copiaArquivo = new CopiaArquivoThread(file, out);
-		
-		copiaArquivo.start();
-		
-		copiaArquivo.join();
-		
-		this.file = ((CopiaArquivoThread) copiaArquivo).getArquivoOutput();
-
-		setPackage();
+	public CompileFromInput(List<File> files) {
+		filesToBeCompiled.addAll(files);
+		filesToBeCompiled.forEach(this::setPackage);
 	}
 
-	public void compile() throws Exception {
-		Path dest = Paths.get("C:\\projects\\java\\yamlConversor\\bin");
+	public String compile() {
+		Path dest = Paths.get("C:\\workspaces\\BravosMobile\\yamlConversor\\bin");
 
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 
@@ -57,47 +46,56 @@ public class CompileFromInput {
 		optionList.add("-d");
 		optionList.add(dest.toString());
 
-		Iterable<? extends JavaFileObject> compilationUnit = fileManager
-				.getJavaFileObjectsFromFiles(Arrays.asList(file));
+		Iterable<? extends JavaFileObject> compilationUnit = fileManager.getJavaFileObjectsFromFiles(filesToBeCompiled);
 		JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, optionList, null,
 				compilationUnit);
 
-		if (task.call()) {
-			Thread.currentThread().sleep(10000);
-			/**
-			 * Load and execute
-			 *************************************************************************************************/
-			System.out.println("Yipe");
-			// Create a new custom class loader, pointing to the directory that
-			// contains the compiled
-			// classes, this should point to the top of the package structure!
-			URLClassLoader classLoader = URLClassLoader.newInstance(
-					new URL[] { new File("").toURI().toURL() });
-			
-			// Load the class from the classloader by name....
-			Class<?> loadedClass = classLoader.loadClass(getPackage()
-					+ file.getName().replace(".java", ""));
-			// Create a new instance...
-			Object obj = loadedClass.newInstance();
-			// Santity check
-			System.out.println(obj.getClass());
-			YamlObjectGenerator.generateDefinitionsYaml(obj);
-			classLoader.close();
+		try {
+			if (task.call()) {
+				/**
+				 * Load and execute
+				 *************************************************************************************************/
+				// Create a new custom class loader, pointing to the directory
+				// that
+				// contains the compiled
+				// classes, this should point to the top of the package
+				// structure!
 
-			/*************************************************************************************************
-			 * Load and execute
-			 **/
-		} else {
-			for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-				System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(),
-						diagnostic.getSource().toUri());
+				StringBuilder sb = new StringBuilder();
+
+				URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] { new File("").toURI().toURL() });
+				for (File file : filesToBeCompiled) {
+					Class<?> loadedClass = classLoader
+							.loadClass(getPackage(file) + file.getName().replace(".java", ""));
+					Object obj = loadedClass.newInstance();
+					// Santity check
+					sb.append(YamlObjectGenerator.generateDefinitionsYaml(obj) + "\n");
+				}
+				classLoader.close();
+				fileManager.close();
+				return sb.toString();
+
+				/*************************************************************************************************
+				 * Load and execute
+				 **/
+			} else {
+				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+					System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(),
+							diagnostic.getSource().toUri());
+				}
 			}
+		} catch (ClassNotFoundException e) {
+			System.out.println("Yipe");
+			System.out.println("Arquivos compilados, recomeçe a aplicação");
+			System.exit(0);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		fileManager.close();
+		return null;
 
 	}
 
-	private String getPackage() throws Exception {
+	private String getPackage(File file) throws Exception {
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String packageName = br.readLine();
 		br.close();
@@ -105,23 +103,26 @@ public class CompileFromInput {
 		return packageName.replace(";", ".");
 	}
 
-	private void setPackage() throws Exception {
+	private void setPackage(File file) {
 
-		File temp = File.createTempFile(file.getPath().replace(".java", "temp.java"), "");
-		temp.deleteOnExit();
-		BufferedReader br = new BufferedReader(new FileReader(file));
-		br.readLine();
-		BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-		bw.write("package " + packageClasses + ";");
-		String line;
-		while ((line = br.readLine()) != null) {
-			bw.write(line + "\n");
+		try {
+			File temp = File.createTempFile(file.getPath().replace(".java", "temp.java"), "");
+			temp.deleteOnExit();
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			br.readLine();
+			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+			bw.write("package " + packageClasses + ";");
+			String line;
+			while ((line = br.readLine()) != null) {
+				bw.write(line + "\n");
+			}
+			br.close();
+			bw.flush();
+			bw.close();
+
+			Files.move(temp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+		} catch (Exception e) {
 		}
-		br.close();
-		bw.flush();
-		bw.close();
-
-		Files.move(temp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
 	}
 
