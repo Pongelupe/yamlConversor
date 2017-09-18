@@ -1,8 +1,7 @@
 package com.yamlConversor.main;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Queue;
@@ -18,35 +17,31 @@ public class Main {
 
 	public static void main(String... args) {
 		try {
-			StringBuilder sb = new StringBuilder();
 			// the first argument should be a path from compressed(zip) file
-			// String pathSourceZip = args[0];
-			String pathSourceZip = "C:\\classes.zip";
+			String pathSourceZip = args[0];
 
-			// the second argument should be the path where Yaml Conversor is
-			// String pathDestZip = args[1];
-			String pathDestZip = "C:\\workspaces\\BravosMobile\\yamlConversor\\src\\com\\yamlConversor\\";
-
+			StringBuilder yaml = new StringBuilder();
 			String header = HeaderGenerator.generateHeader();
-			sb.append(header);
-			unzip(pathSourceZip, pathDestZip);
+			yaml.append(header);
+			unzip(pathSourceZip, "src/com/yamlConversor/");
 
-			File folder = new File("C:\\workspaces\\BravosMobile\\yamlConversor\\src\\com\\yamlConversor\\classes");
+			File folder = new File("src/com/yamlConversor/classes");
+			folder.deleteOnExit();
 			ArrayList<File> files = new ArrayList<File>(Arrays.asList(folder.listFiles()));
 			CompileFromInput compiler = new CompileFromInput(
 					files.stream().filter(f -> f.getName().endsWith(".java")).collect(Collectors.toList()));
 
-			File tempFile = File.createTempFile("test", "txt");
-			tempFile.deleteOnExit();
-			BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
-			bw.write("/fazerLogin fazerLoginChamada fazerLoginResposta\n/buscar buscarChamada buscarResposta");
-			bw.close();
+			File pathsFile = files.stream().filter(f -> f.getName().endsWith(".txt")).findFirst().orElseGet(null);
+			pathsFile.deleteOnExit();
 
-			Queue<String> generatedPaths = YamlPathGenerator.generatePaths(tempFile.getPath());
-			generatedPaths.forEach(sb::append);
+			Queue<String> generatedPaths = YamlPathGenerator.generatePaths(pathsFile.getPath());
+			generatedPaths.forEach(yaml::append);
 
-			sb.append(compiler.compile());
-			System.out.println(sb.toString());
+			yaml.append(compiler.compile());
+
+			generateYaml(yaml.toString());
+
+			System.out.println(yaml.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -57,6 +52,15 @@ public class Main {
 		if (zipFile.isEncrypted())
 			throw new RuntimeException("O arquivo zip está criptografado");
 		zipFile.extractAll(dest);
+	}
+
+	private static void generateYaml(String yaml) throws Exception {
+
+		PrintWriter writer = new PrintWriter(new File("yaml/swagger.yaml"), "UTF-8");
+		writer.println(yaml);
+		writer.close();
+
+		System.out.println(yaml);
 	}
 
 }

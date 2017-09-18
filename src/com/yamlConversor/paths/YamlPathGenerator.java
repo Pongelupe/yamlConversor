@@ -20,8 +20,7 @@ public class YamlPathGenerator {
 		}
 		br.close();
 
-		while (!paths.isEmpty())
-			generatedPaths.offer(generatePath(paths.poll()));
+		paths.forEach(p -> generatedPaths.offer(generatePath(p)));
 
 		generatedPaths.offer("\ndefinitions:\n");
 

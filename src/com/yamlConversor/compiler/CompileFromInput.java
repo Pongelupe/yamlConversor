@@ -33,7 +33,7 @@ public class CompileFromInput {
 	}
 
 	public String compile() {
-		Path dest = Paths.get("C:\\workspaces\\BravosMobile\\yamlConversor\\bin");
+		Path dest = Paths.get("bin");
 
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 
@@ -122,6 +122,7 @@ public class CompileFromInput {
 
 			Files.move(temp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}

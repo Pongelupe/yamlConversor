@@ -1,5 +1,6 @@
 package com.yamlConversor.definitions;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -20,7 +21,9 @@ public class YamlObjectGenerator {
 		sb.append(simpleName + ":\ntype: ");
 		sb.append(getObject(obj));
 
-		PrintWriter writer = new PrintWriter(fileDefinitionYamlName.replace("x", simpleName), "UTF-8");
+		new File("yaml/").mkdir();
+		File yamlDefinition = new File("yaml/" + fileDefinitionYamlName.replace("x", simpleName));
+		PrintWriter writer = new PrintWriter(yamlDefinition, "UTF-8");
 		writer.println(sb.toString());
 		writer.close();
 
