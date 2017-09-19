@@ -82,6 +82,7 @@ public class CompileFromInput {
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
 					System.out.format("Error on line %d in %s%n", diagnostic.getLineNumber(),
 							diagnostic.getSource().toUri());
+					System.exit(0);
 				}
 			}
 		} catch (ClassNotFoundException e) {

@@ -16,10 +16,13 @@ public class YamlObjectGenerator {
 	private static String fileDefinitionYamlName = "yaml(x).yaml";
 
 	public static String generateDefinitionsYaml(Object obj) throws Exception {
+		Class<?> clazz = obj.getClass();
 		StringBuilder sb = new StringBuilder();
 		String simpleName = obj.getClass().getSimpleName();
 		sb.append(simpleName + ":\ntype: ");
 		sb.append(getObject(obj));
+		String superClazz = clazz.getGenericSuperclass().getTypeName();
+		sb.append(superClazz.equals("java.lang.Object") ? "" : "$ref: #/definitions/" + getSimpleName(superClazz));
 
 		new File("yaml/").mkdir();
 		File yamlDefinition = new File("yaml/" + fileDefinitionYamlName.replace("x", simpleName));
@@ -46,6 +49,11 @@ public class YamlObjectGenerator {
 		}
 
 		return sb.toString().replaceAll("int", "integer");
+	}
+
+	private static String getSimpleName(String clazz) {
+		String[] packages = clazz.split("\\.");
+		return packages[packages.length - 1];
 	}
 
 	private static String getTypesFormatted(Field field, String type) throws Exception {
