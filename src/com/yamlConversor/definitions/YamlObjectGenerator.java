@@ -21,7 +21,7 @@ public class YamlObjectGenerator {
 		sb.append(simpleName + ":\ntype: ");
 		sb.append(getObject(obj));
 		if (superClazz != null && !superClazz.equals("Object"))
-			sb.append("$ref: #/definitions/" + superClazz);
+			sb.append("$ref: #/definitions/" + superClazz + "\n");
 
 		new File("yaml/").mkdir();
 		File yamlDefinition = new File("yaml/" + fileDefinitionYamlName.replace("x", simpleName));

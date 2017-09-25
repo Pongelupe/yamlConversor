@@ -17,6 +17,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -33,6 +37,7 @@ public class CompileFromInput {
 	private final String pathFileMap = "superClasses.txt";
 	private final ArrayList<File> filesToBeCompiled = new ArrayList<File>();
 	private final HashMap<String, String> superClassesMap = new HashMap<String, String>();
+	private final ExecutorService pool = Executors.newCachedThreadPool();
 
 	public CompileFromInput(List<File> files) {
 		filesToBeCompiled.addAll(files);
@@ -71,17 +76,27 @@ public class CompileFromInput {
 				StringBuilder sb = new StringBuilder();
 
 				URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] { new File("").toURI().toURL() });
+
+				retriveMap();
+
 				for (File file : filesToBeCompiled) {
 					Class<?> loadedClass = classLoader
 							.loadClass(getPackage(file) + file.getName().replace(".java", ""));
 					Object obj = loadedClass.newInstance();
-					// Santity check
-					retriveMap();
-					String superClazz = superClassesMap.get(obj.getClass().getSimpleName());
-					sb.append(YamlObjectGenerator.generateDefinitionsYaml(obj, superClazz));
+					Future<String> objFuture = pool.submit(new Callable<String>() {
+
+						@Override
+						public String call() throws Exception {
+							String superClazz = superClassesMap.get(obj.getClass().getSimpleName());
+							return YamlObjectGenerator.generateDefinitionsYaml(obj, superClazz);
+						}
+					});
+
+					sb.append(objFuture.get());
 				}
 				classLoader.close();
 				fileManager.close();
+				pool.shutdown();
 				return sb.toString();
 
 				/*************************************************************************************************
@@ -130,7 +145,6 @@ public class CompileFromInput {
 			}
 			br.close();
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
