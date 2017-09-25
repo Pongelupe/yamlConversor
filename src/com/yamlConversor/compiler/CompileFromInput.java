@@ -3,15 +3,19 @@ package com.yamlConversor.compiler;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.tools.Diagnostic;
@@ -26,7 +30,9 @@ import com.yamlConversor.definitions.YamlObjectGenerator;
 public class CompileFromInput {
 
 	private final String packageClasses = "com.yamlConversor.classes";
+	private final String pathFileMap = "superClasses.txt";
 	private final ArrayList<File> filesToBeCompiled = new ArrayList<File>();
+	private final HashMap<String, String> superClassesMap = new HashMap<String, String>();
 
 	public CompileFromInput(List<File> files) {
 		filesToBeCompiled.addAll(files);
@@ -70,7 +76,9 @@ public class CompileFromInput {
 							.loadClass(getPackage(file) + file.getName().replace(".java", ""));
 					Object obj = loadedClass.newInstance();
 					// Santity check
-					sb.append(YamlObjectGenerator.generateDefinitionsYaml(obj) + "\n");
+					retriveMap();
+					String superClazz = superClassesMap.get(obj.getClass().getSimpleName());
+					sb.append(YamlObjectGenerator.generateDefinitionsYaml(obj, superClazz));
 				}
 				classLoader.close();
 				fileManager.close();
@@ -87,14 +95,43 @@ public class CompileFromInput {
 				}
 			}
 		} catch (ClassNotFoundException e) {
+			persistMap();
 			System.out.println("Yipe");
-			System.out.println("Arquivos compilados, recomeï¿½e a aplicaï¿½ï¿½o");
+			System.out.println("Arquivos compilados, recomeçe a aplicação");
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 
+	}
+
+	private void persistMap() {
+		try {
+			File superClasses = new File(pathFileMap);
+			PrintWriter writer;
+			writer = new PrintWriter(superClasses, "UTF-8");
+			superClassesMap.forEach((k, v) -> writer.println(k + " " + v));
+			writer.close();
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void retriveMap() {
+		try {
+			File file = new File(pathFileMap);
+			file.deleteOnExit();
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] keysValues = line.split(" ");
+				superClassesMap.put(keysValues[0], keysValues[1]);
+			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private String getPackage(File file) throws Exception {
@@ -132,21 +169,31 @@ public class CompileFromInput {
 		String line;
 		String clazzLine = "";
 		boolean flagClass = true;
+
 		while ((line = br.readLine()) != null && flagClass) {
 			flagClass = !line.contains("class");
 			if (!flagClass) {
 				if (line.contains("extends")) {
-					clazzLine = line.substring(line.indexOf("extends"));
+
+					clazzLine = line.substring(line.indexOf("class"));
 					String[] splitedSuperClazz = clazzLine.split(" ");
-					String superClazz = splitedSuperClazz[1];
-					System.out.println(superClazz);
+					String clazz = splitedSuperClazz[1];
+					String superClazz = splitedSuperClazz[3];
+					if (!superClazz.startsWith("Object"))
+						superClassesMap.put(clazz, superClazz);
+
 					clazzLine = line.substring(0, line.indexOf("extends"));
 					bw.write(clazzLine + "{\n");
+
 				} else if (line.contains("implements")) {
+
 					clazzLine = line.substring(0, line.indexOf("implements"));
 					bw.write(clazzLine + "{\n");
+
 				} else
 					bw.write(line + "\n");
+			} else {
+				bw.write(line + "\n");
 			}
 		}
 
@@ -156,8 +203,11 @@ public class CompileFromInput {
 		String line;
 		while (((line = br.readLine()) != null)) {
 			if ((line.contains("new") || line.contains("private")) && (!line.contains("{") || !line.contains("}")
-					|| !line.contains("return") || !line.contains("@") || !line.contains("()")))
+					|| !line.contains("return") || !line.contains("@") || !line.contains("()"))) {
+
+				line = line.replace("Date", "String");
 				bw.write(line + "\n");
+			}
 		}
 		bw.write("}");
 	}
