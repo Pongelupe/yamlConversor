@@ -135,7 +135,14 @@ public class CompileFromInput {
 		while ((line = br.readLine()) != null && flagClass) {
 			flagClass = !line.contains("class");
 			if (!flagClass) {
-				if (line.contains("implements")) {
+				if (line.contains("extends")) {
+					clazzLine = line.substring(line.indexOf("extends"));
+					String[] splitedSuperClazz = clazzLine.split(" ");
+					String superClazz = splitedSuperClazz[1];
+					System.out.println(superClazz);
+					clazzLine = line.substring(0, line.indexOf("extends"));
+					bw.write(clazzLine + "{\n");
+				} else if (line.contains("implements")) {
 					clazzLine = line.substring(0, line.indexOf("implements"));
 					bw.write(clazzLine + "{\n");
 				} else
@@ -148,8 +155,8 @@ public class CompileFromInput {
 	private void setFields(BufferedReader br, BufferedWriter bw) throws IOException {
 		String line;
 		while (((line = br.readLine()) != null)) {
-			if ((line.contains("new") || line.contains("private"))
-					&& (!line.contains("{") || !line.contains("}") || !line.contains("return") || !line.contains("()")))
+			if ((line.contains("new") || line.contains("private")) && (!line.contains("{") || !line.contains("}")
+					|| !line.contains("return") || !line.contains("@") || !line.contains("()")))
 				bw.write(line + "\n");
 		}
 		bw.write("}");
