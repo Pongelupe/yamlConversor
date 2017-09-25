@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -29,7 +30,7 @@ public class CompileFromInput {
 
 	public CompileFromInput(List<File> files) {
 		filesToBeCompiled.addAll(files);
-		filesToBeCompiled.forEach(this::setPackage);
+		filesToBeCompiled.forEach(this::prepareFile);
 	}
 
 	public String compile() {
@@ -87,7 +88,7 @@ public class CompileFromInput {
 			}
 		} catch (ClassNotFoundException e) {
 			System.out.println("Yipe");
-			System.out.println("Arquivos compilados, recomeçe a aplicação");
+			System.out.println("Arquivos compilados, recomeï¿½e a aplicaï¿½ï¿½o");
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -104,19 +105,18 @@ public class CompileFromInput {
 		return packageName.replace(";", ".");
 	}
 
-	private void setPackage(File file) {
+	private void prepareFile(File file) {
 
 		try {
 			File temp = File.createTempFile(file.getPath().replace(".java", "temp.java"), "");
 			temp.deleteOnExit();
 			BufferedReader br = new BufferedReader(new FileReader(file));
-			br.readLine();
 			BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-			bw.write("package " + packageClasses + ";");
-			String line;
-			while ((line = br.readLine()) != null) {
-				bw.write(line + "\n");
-			}
+
+			setPackage(br, bw);
+			setClass(br, bw);
+			setFields(br, bw);
+
 			br.close();
 			bw.flush();
 			bw.close();
@@ -126,6 +126,44 @@ public class CompileFromInput {
 			e.printStackTrace();
 		}
 
+	}
+
+	private void setClass(BufferedReader br, BufferedWriter bw) throws IOException {
+		String line;
+		String clazzLine = "";
+		boolean flagClass = true;
+		while ((line = br.readLine()) != null && flagClass) {
+			flagClass = !line.contains("class");
+			if (!flagClass) {
+				if (line.contains("implements")) {
+					clazzLine = line.substring(0, line.indexOf("implements"));
+					bw.write(clazzLine + "{\n");
+				} else
+					bw.write(line + "\n");
+			}
+		}
+
+	}
+
+	private void setFields(BufferedReader br, BufferedWriter bw) throws IOException {
+		String line;
+		while (((line = br.readLine()) != null)) {
+			if ((line.contains("new") || line.contains("private"))
+					&& (!line.contains("{") || !line.contains("}") || !line.contains("return") || !line.contains("()")))
+				bw.write(line + "\n");
+		}
+		bw.write("}");
+	}
+
+	private void setPackage(BufferedReader br, BufferedWriter bw) throws IOException {
+		String line;
+		boolean flagPackage = true;
+
+		while (((line = br.readLine()) != null) && flagPackage) {
+			flagPackage = !line.contains("package");
+			if (!flagPackage)
+				bw.write("package " + packageClasses + ";\n");
+		}
 	}
 
 }
