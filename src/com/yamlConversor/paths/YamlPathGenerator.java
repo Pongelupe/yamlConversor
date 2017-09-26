@@ -8,6 +8,7 @@ import java.util.Queue;
 
 public class YamlPathGenerator {
 
+	private static final String yamlTab = "    ";
 	private static Queue<Path> paths = new LinkedList<Path>();
 	private static Queue<String> generatedPaths = new LinkedList<String>();
 
@@ -22,7 +23,7 @@ public class YamlPathGenerator {
 
 		paths.forEach(p -> generatedPaths.offer(generatePath(p)));
 
-		generatedPaths.offer("\ndefinitions:\n");
+		generatedPaths.offer("\ndefinitions: \n");
 
 		return generatedPaths;
 
@@ -40,13 +41,13 @@ public class YamlPathGenerator {
 	public static String generatePath(Path path) {
 		StringBuilder sb = new StringBuilder();
 		// Request
-		sb.append("\n" + path.getPath() + ":\n" + path.getRequestType()
-				+ ":\ndescription:\"\"\nconsumes:\n-application/json\nproduces:\n-application/json\n"
-				+ "parameters:\n-in: body\ndescription:\"\"\nrequeried: true\nschema:\n$ref:\"#/definitions/"
+		sb.append("\n" + path.getPath() + ":\n" + path.getRequestType() + ":\ndescription: \"\"\nconsumes: \n" + yamlTab
+				+ "-application/json\nproduces: \n" + yamlTab + "-application/json\n"
+				+ "parameters:\n-in: body\ndescription: \"\"\nrequeried: true\nschema: \n$ref: \"#/definitions/"
 				+ path.getObjDefinitionRequest() + "\"\n");
 
 		// response
-		sb.append("responses:\n\"200\":\n$ref:\"#/definition/" + path.getObjDefinitionResponse() + "\"");
+		sb.append("responses:\n\"200\": \n$ref: \"#/definition/" + path.getObjDefinitionResponse() + "\"");
 
 		return sb.toString();
 

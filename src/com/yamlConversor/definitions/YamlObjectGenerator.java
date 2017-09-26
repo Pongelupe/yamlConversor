@@ -56,7 +56,7 @@ public class YamlObjectGenerator {
 		if (Collection.class.isAssignableFrom(field.getType()))
 			type = getArrays(field);
 		else if (type.contains("[]"))
-			type = "array\nitens:\ntype:" + type.substring(0, type.length() - 2);
+			type = "array\nitens:\ntype: " + type.substring(0, type.length() - 2);
 
 		else if (!isPrimitive(field)) {
 			type = getObject(field, type);
@@ -102,6 +102,7 @@ public class YamlObjectGenerator {
 		primitiveTypes.add(Integer.class);
 		primitiveTypes.add(long.class);
 		primitiveTypes.add(float.class);
+		primitiveTypes.add(Double.class);
 		primitiveTypes.add(double.class);
 		primitiveTypes.add(void.class);
 		return primitiveTypes;

@@ -185,7 +185,8 @@ public class CompileFromInput {
 		boolean flagClass = true;
 
 		while ((line = br.readLine()) != null && flagClass) {
-			flagClass = !line.contains("class");
+			flagClass = !(line.contains("class") ^ line.contains("enum"));
+			line = line.replace("enum", "class");
 			if (!flagClass) {
 				if (line.contains("extends")) {
 
@@ -207,7 +208,8 @@ public class CompileFromInput {
 				} else
 					bw.write(line + "\n");
 			} else {
-				bw.write(line + "\n");
+				if (line.contains("java"))
+					bw.write(line + "\n");
 			}
 		}
 
@@ -216,10 +218,11 @@ public class CompileFromInput {
 	private void setFields(BufferedReader br, BufferedWriter bw) throws IOException {
 		String line;
 		while (((line = br.readLine()) != null)) {
-			if ((line.contains("new") || line.contains("private")) && (!line.contains("{") || !line.contains("}")
-					|| !line.contains("return") || !line.contains("@") || !line.contains("()"))) {
+			if (line.contains("private") && !((line.contains("{") || line.contains("}") || line.contains("return")
+					|| line.contains("@") || line.contains("()") || line.contains("throw") || line.contains("class")
+					|| line.contains("format") || line.contains("static")))) {
 
-				line = line.replace("Date", "String");
+				line = line.replace(" Date ", " String ").replace("final", "").replace(" Uri ", " String ");
 				bw.write(line + "\n");
 			}
 		}
