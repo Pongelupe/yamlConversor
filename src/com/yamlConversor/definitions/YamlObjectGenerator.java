@@ -11,17 +11,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class YamlObjectGenerator {
+import com.yamlConversor.util.TabHelper;
 
-	private static String fileDefinitionYamlName = "yaml(x).yaml";
+public class YamlObjectGenerator implements TabHelper {
+
+	private static final String fileDefinitionYamlName = "yaml(x).yaml";
 
 	public static String generateDefinitionsYaml(Object obj, String superClazz) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		String simpleName = obj.getClass().getSimpleName();
-		sb.append(simpleName + ":\ntype: ");
+		sb.append(yamlFullTab + simpleName + ":\n" + repeat(4) + "type: ");
 		sb.append(getObject(obj));
 		if (superClazz != null && !superClazz.equals("Object"))
-			sb.append("$ref: #/definitions/" + superClazz + "\n");
+			sb.append(repeat(6) + toCamelCase(superClazz) + ":\n" + repeat(8) + "$ref: \"#/definitions/" + superClazz
+					+ "\"\n");
 
 		new File("yaml/").mkdir();
 		File yamlDefinition = new File("yaml/" + fileDefinitionYamlName.replace("x", simpleName));
@@ -39,12 +42,12 @@ public class YamlObjectGenerator {
 		ArrayList<Field> fields = new ArrayList<Field>(Arrays.asList(clazz.getDeclaredFields()));
 
 		sb.append("object\n");
-		sb.append("properties:\n");
+		sb.append(repeat(4) + "properties:\n");
 		for (Field field : fields) {
 			field.setAccessible(true);
 			if (!field.isAccessible() || !Modifier.isStatic(field.getModifiers()))
-				sb.append(field.getName() + ":\ntype: " + getTypesFormatted(field, field.getType().getSimpleName())
-						+ "\n");
+				sb.append(repeat(6) + field.getName() + ":\n" + repeat(8)
+						+ getTypesFormatted(field, field.getType().getSimpleName()) + "\n");
 		}
 
 		return sb.toString().replaceAll("int", "integer");
@@ -54,19 +57,18 @@ public class YamlObjectGenerator {
 		type = type.toLowerCase();
 
 		if (Collection.class.isAssignableFrom(field.getType()))
-			type = getArrays(field);
+			type = "type: " + getArrays(field);
 		else if (type.contains("[]"))
-			type = "array\nitens:\ntype: " + type.substring(0, type.length() - 2);
+			type = "type: " + "array\n" + repeat(6) + "items:\ntype: " + type.substring(0, type.length() - 2);
 
 		else if (!isPrimitive(field)) {
-			type = getObject(field, type);
-		}
+			char firstChar = Character.toUpperCase(type.charAt(0));
+			type = firstChar + type.substring(1);
+			type = "$ref: \"#/definitions/" + type + "\"";
+		} else
+			type = "type: " + type;
 
 		return type.replaceAll("integer", "int");
-	}
-
-	private static String getObject(Field field, String type) throws Exception {
-		return getObject(field.getType().newInstance());
 	}
 
 	private static boolean isPrimitive(Field field) {
@@ -81,7 +83,7 @@ public class YamlObjectGenerator {
 
 	private static String getArrays(Field field) throws Exception {
 		ParameterizedType pt = (ParameterizedType) field.getGenericType();
-		String preType = "array\nitens:\ntype: ";
+		String preType = "array\n" + repeat(8) + "items:\n" + repeat(10) + "type: ";
 		String rawType = pt.getActualTypeArguments()[0].getTypeName();
 		String[] split = rawType.toLowerCase().split("\\.");
 		String type = split[split.length - 1];
@@ -106,6 +108,15 @@ public class YamlObjectGenerator {
 		primitiveTypes.add(double.class);
 		primitiveTypes.add(void.class);
 		return primitiveTypes;
+	}
+
+	private static String toCamelCase(String str) {
+		char firstChar = Character.toLowerCase(str.charAt(0));
+		return firstChar + str.substring(1);
+	}
+
+	private static String repeat(int count) {
+		return TabHelper.repeat(count);
 	}
 
 }
