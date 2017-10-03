@@ -18,7 +18,8 @@ public class YamlPathGenerator implements TabHelper {
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line;
 		while ((line = br.readLine()) != null) {
-			paths.offer(getPath(line));
+			if (!line.isEmpty())
+				paths.offer(getPath(line));
 		}
 		br.close();
 
@@ -44,10 +45,10 @@ public class YamlPathGenerator implements TabHelper {
 		// Request
 
 		sb.append("\n" + yamlFullTab + path.getPath() + ":\n" + repeat(4) + path.getRequestType() + ":\n" + repeat(6)
-				+ "description: \"\"\n" + repeat(6) + "consumes: \n" + repeat(7) + "-application/json\n" + repeat(6)
-				+ "produces: \n" + repeat(7) + "-application/json\n" + repeat(6) + "parameters:\n" + repeat(7)
-				+ "-in: body\n" + repeat(8) + "schema: \n" + repeat(9) + "$ref: \"#/definitions/"
-				+ firstLetterToUpperCase(path.getObjDefinitionRequest()) + "\"\n");
+				+ "description: \"\"\n" + repeat(6) + "consumes: \n" + repeat(7) + "- application/json\n" + repeat(6)
+				+ "produces: \n" + repeat(7) + "- application/json\n" + repeat(6) + "parameters:\n" + repeat(7)
+				+ "- in: body\n" + repeat(8) + "name: body\n" + repeat(8) + "schema: \n" + repeat(10)
+				+ "$ref: \"#/definitions/" + firstLetterToUpperCase(path.getObjDefinitionRequest()) + "\"\n");
 
 		// response
 		sb.append(repeat(6) + "responses:\n" + repeat(8) + "\"200\": \n" + repeat(9) + "description: \"\"\n" + repeat(9)

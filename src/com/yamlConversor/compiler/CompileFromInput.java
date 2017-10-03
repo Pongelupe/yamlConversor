@@ -112,7 +112,7 @@ public class CompileFromInput {
 		} catch (ClassNotFoundException e) {
 			persistMap();
 			System.out.println("Yipe");
-			System.out.println("Arquivos compilados, recomeçe a aplicação");
+			System.out.println("Files has been compiled\nrefresh, \nrestart!");
 			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace();

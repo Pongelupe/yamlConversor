@@ -54,19 +54,17 @@ public class YamlObjectGenerator implements TabHelper {
 	}
 
 	private static String getTypesFormatted(Field field, String type) throws Exception {
-		type = type.toLowerCase();
 
 		if (Collection.class.isAssignableFrom(field.getType()))
 			type = "type: " + getArrays(field);
 		else if (type.contains("[]"))
-			type = "type: " + "array\n" + repeat(6) + "items:\ntype: " + type.substring(0, type.length() - 2);
+			type = "type: " + "array\n" + repeat(6) + "items:\ntype: "
+					+ type.substring(0, type.length() - 2).toLowerCase();
 
 		else if (!isPrimitive(field)) {
-			char firstChar = Character.toUpperCase(type.charAt(0));
-			type = firstChar + type.substring(1);
 			type = "$ref: \"#/definitions/" + type + "\"";
 		} else
-			type = "type: " + type;
+			type = "type: " + type.toLowerCase();
 
 		return type.replaceAll("integer", "int");
 	}
@@ -83,13 +81,17 @@ public class YamlObjectGenerator implements TabHelper {
 
 	private static String getArrays(Field field) throws Exception {
 		ParameterizedType pt = (ParameterizedType) field.getGenericType();
-		String preType = "array\n" + repeat(8) + "items:\n" + repeat(10) + "type: ";
+		String preType = "array\n" + repeat(8) + "items:\n";
 		String rawType = pt.getActualTypeArguments()[0].getTypeName();
-		String[] split = rawType.toLowerCase().split("\\.");
+		String[] split = rawType.split("\\.");
 		String type = split[split.length - 1];
-		type = (type.equals("integer") ? "int" : type);
+		type = (type.equalsIgnoreCase("integer") ? "int" : type);
 		if (!isPrimitive(rawType))
-			type = getObject(Class.forName(rawType).newInstance());
+			type = repeat(9) + "$ref: \"#/definitions/" + type + "\"";
+		else {
+			preType += repeat(10) + "type: ";
+			type = type.toLowerCase();
+		}
 		return preType + type;
 	}
 

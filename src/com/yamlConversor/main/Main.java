@@ -37,7 +37,6 @@ public class Main {
 			unzip(pathSourceZip, "src/com/yamlConversor/");
 
 			File folder = new File("src/com/yamlConversor/classes");
-			folder.deleteOnExit();
 			ArrayList<File> files = new ArrayList<File>(Arrays.asList(folder.listFiles()));
 			Future<String> pathsFuture = pool.submit(new Callable<String>() {
 
@@ -70,9 +69,10 @@ public class Main {
 			yaml.append(definitionsFuture.get());
 
 			generateYaml(yaml.toString());
+			clean(files, folder);
 
-			System.out.println(yaml.toString());
 			pool.shutdown();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -94,4 +94,13 @@ public class Main {
 		System.out.println(yaml);
 	}
 
+	private static void clean(ArrayList<File> files, File folder) {
+		files.forEach(f -> f.delete());
+		folder.delete();
+
+		File binFolder = new File("bin/com/yamlConversor/classes");
+		ArrayList<File> binFiles = new ArrayList<File>(Arrays.asList(binFolder.listFiles()));
+		binFiles.forEach(f -> f.delete());
+		binFolder.delete();
+	}
 }
