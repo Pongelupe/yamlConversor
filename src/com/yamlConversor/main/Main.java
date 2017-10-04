@@ -19,6 +19,8 @@ import net.lingala.zip4j.core.ZipFile;
 
 public class Main {
 
+	private static final String PATH_SRC = "src/com/yamlConversor/";
+
 	public static void main(String... args) {
 		try {
 			// the first argument should be a path from compressed(zip) file
@@ -34,9 +36,9 @@ public class Main {
 				}
 			});
 
-			unzip(pathSourceZip, "src/com/yamlConversor/");
+			unzip(pathSourceZip, PATH_SRC);
 
-			File folder = new File("src/com/yamlConversor/classes");
+			File folder = new File(PATH_SRC + "classes");
 			ArrayList<File> files = new ArrayList<File>(Arrays.asList(folder.listFiles()));
 			Future<String> pathsFuture = pool.submit(new Callable<String>() {
 

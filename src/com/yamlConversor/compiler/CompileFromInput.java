@@ -41,7 +41,7 @@ public class CompileFromInput {
 
 	public CompileFromInput(List<File> files) {
 		filesToBeCompiled.addAll(files);
-		filesToBeCompiled.forEach(this::prepareFile);
+		filesToBeCompiled.parallelStream().forEach(this::prepareFile);
 	}
 
 	public String compile() {
@@ -212,6 +212,7 @@ public class CompileFromInput {
 					bw.write(line + "\n");
 			}
 		}
+		bw.write(line == null ? "\n" : line.concat("\n"));
 
 	}
 
@@ -236,7 +237,7 @@ public class CompileFromInput {
 		while (((line = br.readLine()) != null) && flagPackage) {
 			flagPackage = !line.contains("package");
 			if (!flagPackage)
-				bw.write("package " + packageClasses + ";\n");
+				bw.write("package " + packageClasses + ";\n\n");
 		}
 	}
 
