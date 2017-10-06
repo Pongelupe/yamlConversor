@@ -24,7 +24,8 @@ public class Main {
 	public static void main(String... args) {
 		try {
 			// the first argument should be a path from compressed(zip) file
-			String pathSourceZip = args[0];
+			// String pathSourceZip = args[0];
+			String pathSourceZip = "/home/pongelupe/classes.zip";
 			StringBuilder yaml = new StringBuilder();
 
 			ExecutorService pool = Executors.newCachedThreadPool();
@@ -83,7 +84,7 @@ public class Main {
 	private static void unzip(String source, String dest) throws Exception {
 		ZipFile zipFile = new ZipFile(source);
 		if (zipFile.isEncrypted())
-			throw new RuntimeException("O arquivo zip está criptografado");
+			throw new RuntimeException("O arquivo zip estï¿½ criptografado");
 		zipFile.extractAll(dest);
 	}
 

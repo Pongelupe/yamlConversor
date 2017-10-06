@@ -208,11 +208,11 @@ public class CompileFromInput {
 				} else
 					bw.write(line + "\n");
 			} else {
-				if (line.contains("java"))
+				if (line.contains("java."))
 					bw.write(line + "\n");
 			}
 		}
-		bw.write(line == null ? "\n" : line.concat("\n"));
+		bw.write(line == null || line.contains("@") ? "\n" : line.concat("\n"));
 
 	}
 
